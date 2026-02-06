@@ -26,7 +26,7 @@ class MainController extends Controller
         }
 
         // Список городов для селекта
-        $cities = City::active()->orderBy('name')->get();
+        $cities = City::getActiveCities();
 
         // Категории
         $categories = Category::active()
