@@ -19,7 +19,7 @@ class EventController extends Controller
         $currentCategory = null;
         $maxSlides = 5;
 
-        $cities = \App\Models\City::active()->orderBy('name')->get();
+        $cities = City::getActiveCities();
 
         // Слайды для выбранного города
         $slides = Slide::query()
