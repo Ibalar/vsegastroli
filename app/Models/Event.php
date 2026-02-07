@@ -11,10 +11,6 @@ class Event extends Model
 {
     use HasFactory, FilterableEvents;
 
-class Event extends Model
-{
-    use HasFactory;
-
     protected $fillable = [
         'title',
         'description',
