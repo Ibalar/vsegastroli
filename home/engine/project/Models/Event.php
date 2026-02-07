@@ -10,11 +10,6 @@ use App\Models\Concerns\FilterableEvents;
 class Event extends Model
 {
     use HasFactory, FilterableEvents;
-
-class Event extends Model
-{
-    use HasFactory;
-
     protected $fillable = [
         'title',
         'description',
@@ -35,7 +30,6 @@ class Event extends Model
         'meta_title',
         'meta_description',
     ];
-
     protected $casts = [
         'category_id' => 'integer',
         'city_id' => 'integer',
@@ -139,5 +133,4 @@ class Event extends Model
             default => $this->status
         };
     }
-
 }
