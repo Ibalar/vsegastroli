@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Event;
 use App\Models\Slide;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
