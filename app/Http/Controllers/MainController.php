@@ -28,22 +28,15 @@ class MainController extends Controller
         // Список городов для селекта
         $cities = City::getActiveCities();
 
-        // Категории
-        $categories = Category::active()
-            ->onHome()
-            ->ordered()
-            ->withCount(['events' => function($query) {
+        // Категории с кэшированием
+        $categories = Category::getHomeCategories();
+        
+        $homeCategories = Category::getHomeCategories()->map(function ($category) {
+            $category->loadCount(['events' => function($query) {
                 $query->published();
-            }])
-            ->get();
-
-        $homeCategories = Category::active()
-            ->onHome()
-            ->ordered()
-            ->withCount(['events' => function($query) {
-                $query->published();
-            }])
-            ->get();
+            }]);
+            return $category;
+        });
 
         // Новые мероприятия (без привязки к городу)
         $newEvents = Event::with(['category', 'venue'])

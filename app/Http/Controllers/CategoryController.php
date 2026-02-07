@@ -51,7 +51,7 @@ class CategoryController extends Controller
         // Сортировка
         $events = $eventsQuery->upcoming()->paginate(24);
 
-        $categories = Category::active()->ordered()->get();
+        $categories = Category::getAllActive();
 
         return view('category.show', compact('currentCity', 'currentCategory', 'events', 'categories', 'pageTitle'));
     }
@@ -110,7 +110,7 @@ class CategoryController extends Controller
             ? "Все мероприятия в {$cityIn}"
             : "Все мероприятия";
 
-        $categories = \App\Models\Category::active()->ordered()->get();
+        $categories = Category::getAllActive();
 
         $events = $eventsQuery->upcoming()->paginate(24);
 
