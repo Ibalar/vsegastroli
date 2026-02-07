@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Slide;
-use Illuminate\Http\Request;
-use App\Models\Event;
-use App\Models\City;
+use App\Http\Requests\EventFilterRequest;
 use App\Models\Category;
+use App\Models\City;
+use App\Models\Event;
+use App\Models\Slide;
 
 class EventController extends Controller
 {
     /**
      * Главная страница города
      */
-    public function index(Request $request, $city)
+    public function index(EventFilterRequest $request, $city)
     {
         $currentCity = City::active()->where('slug', $city)->firstOrFail();
         $currentCategory = null;
@@ -41,16 +41,18 @@ class EventController extends Controller
                 ->published()
                 ->upcoming()
                 ->count();
+
             return $category;
         });
 
         $homeCategories = Category::getHomeCategories()->map(function ($category) use ($currentCity) {
-            $category->load(['events' => function($query) use ($currentCity) {
+            $category->load(['events' => function ($query) use ($currentCity) {
                 $query->where('city_id', $currentCity->id)
                     ->published()
                     ->popular()
                     ->limit(12);
             }]);
+
             return $category;
         });
 
@@ -73,30 +75,35 @@ class EventController extends Controller
         $query = Event::query()
             ->published();
 
-        if ($city || $request->filled('city_slug')) {
-            $slug = $city ?? $request->input('city_slug');
+        $validated = $request->validated();
+
+        if ($city || ! empty($validated['city_slug'])) {
+            $slug = $city ?? $validated['city_slug'];
             $cityId = \App\Models\City::where('slug', $slug)->value('id');
             if ($cityId) {
                 $query->where('city_id', $cityId);
             }
         }
 
-        if ($request->filled('q')) {
-            $q = $request->input('q');
-            $query->where(function($qWhere) use ($q) {
-                $qWhere->where('title', 'like', "%$q%")
-                    ->orWhere('venue_name', 'like', "%$q%");
+        $searchQuery = $request->getSearchQuery();
+        if ($searchQuery) {
+            $query->where(function ($qWhere) use ($searchQuery) {
+                $qWhere->where('title', 'like', "%$searchQuery%")
+                    ->orWhere('venue_name', 'like', "%$searchQuery%");
             });
         }
 
-        if ($request->filled('date_start')) {
-            $query->whereDate('start_date', '>=', \Carbon\Carbon::createFromFormat('d.m.Y', $request->date_start));
+        $startDate = $request->getStartDate();
+        $endDate = $request->getEndDate();
+
+        if ($startDate) {
+            $query->whereDate('start_date', '>=', $startDate);
         }
-        if ($request->filled('date_end')) {
-            $query->whereDate('start_date', '<=', \Carbon\Carbon::createFromFormat('d.m.Y', $request->date_end));
+        if ($endDate) {
+            $query->whereDate('start_date', '<=', $endDate);
         }
 
-        $events = $query->with(['category','city'])->orderBy('start_date')->paginate(24);
+        $events = $query->with(['category', 'city'])->orderBy('start_date')->paginate(24);
         $cityIn = $currentCity->name_in ?? null;
 
         return view('home', compact('currentCity', 'categories', 'popularEvents', 'newEvents', 'currentCategory', 'slides', 'cities', 'homeCategories', 'events', 'cityIn'));

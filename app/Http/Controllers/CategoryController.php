@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\EventFilterRequest;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Event;
@@ -12,7 +12,7 @@ class CategoryController extends Controller
     /**
      * Страница категории с фильтрами
      */
-    public function show(Request $request, $city, $category)
+    public function show(EventFilterRequest $request, $city, $category)
     {
         $currentCity = City::active()->where('slug', $city)->firstOrFail();
         $currentCategory = Category::active()->where('slug', $category)->firstOrFail();
@@ -25,17 +25,21 @@ class CategoryController extends Controller
             ->published();
 
         // Текстовый поиск
-        if ($request->has('search') && $request->search) {
-            $eventsQuery->search($request->search);
+        $searchQuery = $request->getSearchQuery();
+        if ($searchQuery) {
+            $eventsQuery->search($searchQuery);
         }
 
         // Фильтр по датам
-        if ($request->has('date_from')) {
-            $eventsQuery->where('start_date', '>=', $request->date_from);
+        $startDate = $request->getStartDate();
+        $endDate = $request->getEndDate();
+
+        if ($startDate) {
+            $eventsQuery->where('start_date', '>=', $startDate);
         }
 
-        if ($request->has('date_to')) {
-            $eventsQuery->where('start_date', '<=', $request->date_to);
+        if ($endDate) {
+            $eventsQuery->where('start_date', '<=', $endDate);
         }
 
         if ($currentCategory && $cityIn) {
@@ -45,7 +49,7 @@ class CategoryController extends Controller
         } elseif ($cityIn) {
             $pageTitle = "Мероприятия {$cityIn}";
         } else {
-            $pageTitle = "Все мероприятия";
+            $pageTitle = 'Все мероприятия';
         }
 
         // Сортировка
@@ -56,7 +60,7 @@ class CategoryController extends Controller
         return view('category.show', compact('currentCity', 'currentCategory', 'events', 'categories', 'pageTitle'));
     }
 
-    public function showNoCity(Request $request, $category)
+    public function showNoCity(EventFilterRequest $request, $category)
     {
         // Находим категорию
         $currentCategory = Category::active()->where('slug', $category)->firstOrFail();
@@ -67,14 +71,19 @@ class CategoryController extends Controller
             ->published();
 
         // Фильтрация и поиск
-        if ($request->has('search') && $request->search) {
-            $eventsQuery->search($request->search);
+        $searchQuery = $request->getSearchQuery();
+        if ($searchQuery) {
+            $eventsQuery->search($searchQuery);
         }
-        if ($request->has('date_from')) {
-            $eventsQuery->where('start_date', '>=', $request->date_from);
+
+        $startDate = $request->getStartDate();
+        $endDate = $request->getEndDate();
+
+        if ($startDate) {
+            $eventsQuery->where('start_date', '>=', $startDate);
         }
-        if ($request->has('date_to')) {
-            $eventsQuery->where('start_date', '<=', $request->date_to);
+        if ($endDate) {
+            $eventsQuery->where('start_date', '<=', $endDate);
         }
 
         $events = $eventsQuery->upcoming()->paginate(24);
@@ -82,7 +91,7 @@ class CategoryController extends Controller
         return view('category.show_no_city', compact('currentCategory', 'events'));
     }
 
-    public function allEvents(Request $request, $city)
+    public function allEvents(EventFilterRequest $request, $city)
     {
         $currentCity = \App\Models\City::active()->where('slug', $city)->firstOrFail();
         $currentCategory = null; // это страница "все", не категория
@@ -94,21 +103,25 @@ class CategoryController extends Controller
             ->published();
 
         // Текстовый поиск
-        if ($request->has('search') && $request->search) {
-            $eventsQuery->search($request->search);
+        $searchQuery = $request->getSearchQuery();
+        if ($searchQuery) {
+            $eventsQuery->search($searchQuery);
         }
 
         // Фильтр по датам
-        if ($request->has('date_from')) {
-            $eventsQuery->where('start_date', '>=', $request->date_from);
+        $startDate = $request->getStartDate();
+        $endDate = $request->getEndDate();
+
+        if ($startDate) {
+            $eventsQuery->where('start_date', '>=', $startDate);
         }
-        if ($request->has('date_to')) {
-            $eventsQuery->where('start_date', '<=', $request->date_to);
+        if ($endDate) {
+            $eventsQuery->where('start_date', '<=', $endDate);
         }
 
         $pageTitle = $cityIn
             ? "Все мероприятия в {$cityIn}"
-            : "Все мероприятия";
+            : 'Все мероприятия';
 
         $categories = Category::getAllActive();
 
@@ -122,7 +135,4 @@ class CategoryController extends Controller
             'pageTitle'
         ));
     }
-
-
-
 }

@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\City;
-use Illuminate\Http\Request;
+use App\Http\Requests\EventFilterRequest;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Event;
 
 class MainController extends Controller
 {
-    public function index(Request $request)
+    public function index(EventFilterRequest $request)
     {
         $cityCookie = $request->cookie('selected_city');
 
         if ($cityCookie) {
             $cityData = json_decode($cityCookie, true);
             // Проверяем, что slug реально существует и город активен
-            if (isset($cityData['slug']) && !empty($cityData['slug'])) {
+            if (isset($cityData['slug']) && ! empty($cityData['slug'])) {
                 $city = City::active()->where('slug', $cityData['slug'])->first();
                 if ($city) {
                     // Редиректим на главную выбранного города
@@ -30,11 +30,12 @@ class MainController extends Controller
 
         // Категории с кэшированием
         $categories = Category::getHomeCategories();
-        
+
         $homeCategories = Category::getHomeCategories()->map(function ($category) {
-            $category->loadCount(['events' => function($query) {
+            $category->loadCount(['events' => function ($query) {
                 $query->published();
             }]);
+
             return $category;
         });
 
@@ -60,29 +61,34 @@ class MainController extends Controller
         // Поиск событий (весь сайт)
         $query = Event::query()->published();
 
+        $validated = $request->validated();
+
         // Если выбран город в поиске — фильтруем по нему
-        if ($request->filled('city_slug')) {
-            $cityId = City::where('slug', $request->input('city_slug'))->value('id');
+        if (! empty($validated['city_slug'])) {
+            $cityId = City::where('slug', $validated['city_slug'])->value('id');
             if ($cityId) {
                 $query->where('city_id', $cityId);
             }
         }
 
         // Поиск по тексту
-        if ($request->filled('q')) {
-            $q = $request->input('q');
-            $query->where(function($qWhere) use ($q) {
-                $qWhere->where('title', 'like', "%$q%")
-                    ->orWhere('venue_name', 'like', "%$q%");
+        $searchQuery = $request->getSearchQuery();
+        if ($searchQuery) {
+            $query->where(function ($qWhere) use ($searchQuery) {
+                $qWhere->where('title', 'like', "%$searchQuery%")
+                    ->orWhere('venue_name', 'like', "%$searchQuery%");
             });
         }
 
         // Фильтр по дате (start_date)
-        if ($request->filled('date_start')) {
-            $query->whereDate('start_date', '>=', \Carbon\Carbon::createFromFormat('d.m.Y', $request->date_start));
+        $startDate = $request->getStartDate();
+        $endDate = $request->getEndDate();
+
+        if ($startDate) {
+            $query->whereDate('start_date', '>=', $startDate);
         }
-        if ($request->filled('date_end')) {
-            $query->whereDate('start_date', '<=', \Carbon\Carbon::createFromFormat('d.m.Y', $request->date_end));
+        if ($endDate) {
+            $query->whereDate('start_date', '<=', $endDate);
         }
 
         $events = $query->orderBy('start_date')->paginate(24);
