@@ -21,7 +21,7 @@
                 <div class="col">
                     <div class="position-relative">
                         <i class="fi-calendar position-absolute top-50 start-0 translate-middle-y ms-3"></i>
-                        <input type="text" name="date_from" value="{{ request('date_from') }}" data-datepicker='{"dateFormat": "d.m.Y"}' class="form-control form-icon-start bg-transparent flatpickr-input" placeholder="С даты">
+                        <input type="text" name="date_start" value="{{ request('date_start') }}" data-datepicker='{"dateFormat": "d.m.Y"}' class="form-control form-icon-start bg-transparent flatpickr-input" placeholder="С даты">
                     </div>
                 </div>
 
@@ -29,7 +29,7 @@
                 <div class="col">
                     <div class="position-relative">
                         <i class="fi-calendar position-absolute top-50 start-0 translate-middle-y ms-3"></i>
-                        <input type="text" name="date_to" value="{{ request('date_to') }}" data-datepicker='{"dateFormat": "d.m.Y"}' class="form-control form-icon-start bg-transparent flatpickr-input" placeholder="по дату">
+                        <input type="text" name="date_end" value="{{ request('date_end') }}" data-datepicker='{"dateFormat": "d.m.Y"}' class="form-control form-icon-start bg-transparent flatpickr-input" placeholder="по дату">
                     </div>
                 </div>
 
